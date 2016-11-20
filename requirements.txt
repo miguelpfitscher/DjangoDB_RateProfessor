@@ -2,3 +2,4 @@ django
 south
 jsonmerge
 gunicorn
+psycopg2
