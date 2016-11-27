@@ -22,4 +22,5 @@ urlpatterns = [
     url(r'^webdb/ratings', include('webdb.rating')),
     url(r'^webdb/insertRating', include('webdb.insertRating')),
     url(r'^webdb/search', include('webdb.search')),
+    url(r'^webdb/searchUniversity', include('webdb.searchUniversity')),
 ]

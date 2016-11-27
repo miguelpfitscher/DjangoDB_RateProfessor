@@ -48,6 +48,24 @@ def insertRating(request):
     else:
         return HttpResponse("erro")
 
+@csrf_exempt
+def searchUniversity(request):
+    
+    if request.method == "POST":
+        try:
+            nameFull = request.POST['searchQuery']         
+            records = University.objects.filter(Q(name__icontains=nameFull) | Q(sigla__icontains=nameFull)) #procura por nome ou sigla             
+            if (not records):
+                return HttpResponse("no rows")       
+    
+            recf = serializers.serialize("json", records)
+
+            return HttpResponse(recf, content_type='application/json')
+        except:           
+            return HttpResponse("no rows") 
+
+    else:
+        return HttpResponse("erro")
 
 @csrf_exempt
 def searchProfessor(request):
@@ -55,7 +73,7 @@ def searchProfessor(request):
     if request.method == "POST":
         try:
             nameFull = request.POST['searchQuery']        
-            Name = nameFull.split() 
+            Name = nameFull.split(' ', 1) 
             if(len(Name) == 2):
                 records = Professor.objects.filter(firstName__icontains=Name[0], lastName__icontains=Name[1])             
                 if (not records):
@@ -71,12 +89,15 @@ def searchProfessor(request):
                     return HttpResponse("no rows")
             if (len(records) < 2):
                 uni = University.objects.filter(pk=(records.values_list('university')[0][0]))
-                agr = Rating.objects.filter(professor=records).aggregate(avr0 = Avg('rating0'), avr1 = Avg('rating1'), num = Count('rating0'))         
-                if(not agr):
-                    return HttpResponse("no rows")
+                ag = Rating.objects.filter(professor=records)
                 fName = records.values_list('firstName', 'lastName', 'course')
                 univ = uni.values_list('name', 'sigla')
-                recf = json.dumps([{'avg0' :int(agr['avr0']), 'avg1' : int(agr['avr1'] ), 'num':int(agr['num']), 'firstName':fName[0][0], 'lastName':fName[0][1], 'course':fName[0][2],'uniName':univ[0][0], 'uniSgl':univ[0][1] }])
+                
+                if(not ag):
+                     recf = json.dumps([{'avg0' :0, 'avg1' :0, 'num':0, 'firstName':fName[0][0], 'lastName':fName[0][1], 'course':fName[0][2],'uniName':univ[0][0], 'uniSgl':univ[0][1] }]) 
+                else:
+                    agr = Rating.objects.filter(professor=records).aggregate(avr0 = Avg('rating0'), avr1 = Avg('rating1'), num = Count('rating0'))         
+                    recf = json.dumps([{'avg0' :int(agr['avr0']), 'avg1' : int(agr['avr1'] ), 'num':int(agr['num']), 'firstName':fName[0][0], 'lastName':fName[0][1], 'course':fName[0][2],'uniName':univ[0][0], 'uniSgl':univ[0][1] }])
             else:
                 recf = serializers.serialize("json", records)
 
@@ -91,7 +112,7 @@ def searchProfessor(request):
 
 def twoFilter(nameFull, uni):
     universidade = University.objects.filter(sigla__icontains=uni)
-    Name = nameFull.split()
+    Name = nameFull.split(' ', 1)
     if(len(Name) == 2):
         records = Professor.objects.filter(firstName__icontains=Name[0], lastName__icontains=Name[1], university=universidade)
     else:

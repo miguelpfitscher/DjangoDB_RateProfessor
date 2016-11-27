@@ -23,10 +23,15 @@ class Professor(models.Model):
     def __str__(self):
         return '%s %s' % (self.firstName, self.lastName)
     
+class Login(models.Model):
+    fbToken = models.CharField(max_length=400)
 
+    def __str__(self):
+        return '%s' % (self.fbToken)
 
 class Rating(models.Model):
     professor = models.ForeignKey(Professor, on_delete=models.CASCADE)    
+    login = models.ForeignKey(Login, on_delete=models.CASCADE)
     rating0 = models.IntegerField(default = 0)
     rating1 = models.IntegerField(default = 0)
     rating2 = models.IntegerField(default = 0)
